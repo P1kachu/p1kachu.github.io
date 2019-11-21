@@ -1,0 +1,12 @@
+title: "angry module excavation"
+description: "Let's play with duct tape."
+#description: "I'm not saying nothing wants to work, but..."
+abstract: "Using concolic analysis to reverse compiled kernel modules, in an attempt to automatically discover their beloved ioctls..."
+authors: "Stanislas 'P1kachu' Lejay"
+date: "LSE Week - July 14, 2016"
+files:
+    - "src/slides.md"
+rjs_path: "reveal.js"
+separator: "\n\n---\n\n"
+rjs_theme: "black"
+hjs_theme: "darkula"

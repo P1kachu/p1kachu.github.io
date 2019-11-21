@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Linux boot process</title>
+        <meta name="description" content="From bootloader to long mode">
+        <meta name="author" content="Stanislas Lejay">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+        <link rel="stylesheet" href="reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="reveal.js/css/theme/black.css" id="theme">
+        <link rel="stylesheet" href="reveal.js/lib/css/darkula.css">
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+        <!--[if lt IE 9]>
+            <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Linux boot process</h1>
+                    <h4>From bootloader to long mode</h4>
+                    <p>Stanislas Lejay</p>
+                    <p><small>ACU Recruitment - July 3, 2017</small></p>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Introduction`
+
+```markdown
+* Before the bootloader
+  * Machine power-on
+  * CPU starts in Real mode
+  * Reset vector jumps on BIOS entry point
+  * Some stuff happens
+  * Bootloader loads real mode kernel and transfers control
+```
+![Image](http://duartes.org/gustavo/blog/img/boot/bootProcess.png)
+<!-- .element: style="max-height: 500px;"-->
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Entry points`
+
+```markdown
+* Bootloader
+* Real mode entry point (_start)
+* Protected mode entry point (startup_32)
+* Long mode entry point (startup_64)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Quick word: Linux Boot protocol`
+
+```markdown
+* Requirements for a bootloader to implement Linux support
+* The bootloader and the kernel need to communicate
+* Kernel setup header partly filled by bootloader
+* Some are readable, writeable, or modifiable by the
+  bootloader (command line)
+```
+```
+01F1/1    ALL      setup_sects       The size of the setup in sectors
+01F2/2    ALL      root_flags        If set, the root is mounted readonly
+01F4/4    2.04+    syssize           The size of the 32-bit code in 16-byte paras
+01F8/2    ALL      ram_size          DO NOT USE - for bootsect.S use only
+01FA/2    ALL      vid_mode          Video mode control
+01FC/2    ALL      root_dev          Default root device number
+01FE/2    ALL      boot_flag         0xAA55 magic number
+0200/2    2.00+    jump              Jump instruction
+0202/4    2.00+    header            Magic signature "HdrS"
+0206/2    2.00+    version           Boot protocol version supported
+0208/4    2.00+    realmode_swtch    Boot loader hook (see below)
+020C/2    2.00+    start_sys_seg     The load-low segment (0x1000) (obsolete)
+020E/2    2.00+    kernel_version    Pointer to kernel version string
+0210/1    2.00+    type_of_loader    Boot loader identifier
+0211/1    2.00+    loadflags         Boot protocol option flags
+...
+```
+<!-- .element: style="font-size: 0.45em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `From the bootloader to Linux`
+
+```markdown
+* After filling the necessary fields, time to boot Linux
+* Bootloader jumps to kernel setup entry point (MZ + @0x200)
+* Execution is passed to Linux's kernel, which jumps to its
+  first initialization routine `start_of_setup`
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`Initial setup`
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        
+`/arch/x86/boot/header.S:start_of_setup (1/4)`
+
+```c
+# Verifies that %es == %ds
+        movw    %ds, %ax
+        movw    %ax, %es
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `/arch/x86/boot/header.S:start_of_setup (2/4)`
+
+```c
+# If %ss == %ds, assume the stack is correctly set up
+        movw    %ss, %dx
+        cmpw    %ax, %dx                 # %ds == %ss?
+        movw    %sp, %dx
+        je      2f
+
+        # Stack not good
+        movw    $_end, %dx               # end of the setup code
+        testb   $CAN_USE_HEAP, loadflags # Boot parameter
+        jz      1f
+        movw    heap_end_ptr, %dx        # We can use the heap
+1:      addw    $STACK_SIZE, %dx
+        jnc     2f
+        ...
+
+2:      ... # Stack is good
+        ... # Alignements and check
+        sti
+```
+<!-- .element: style="font-size: 0.45em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `/arch/x86/boot/header.S:start_of_setup (3/4)`
+
+```c
+# We will have entered with %cs = %ds+0x20, normalize %cs so
+# it is on par with the other segments.
+        pushw   %ds
+        pushw   $6f
+        lretw                   # $ip = label $6f / %cs = %ds
+6:
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `/arch/x86/boot/header.S:start_of_setup (4/4)`
+
+```c
+6:
+        ...
+        # Zero the bss
+        movw    $__bss_start, %di
+        movw    $_end+3, %cx            # Aligned
+        xorl    %eax, %eax              # %ax = 0
+        subw    %di, %cx                # BSS section size
+        shrw    $2, %cx                 # Divided by 4 (word)
+
+        # while (cx) { *(%di) = %ax; %di += 4; %cx -= 1 }
+        rep; stosl
+
+        calll main
+```
+<!-- .element: style="font-size: 0.45em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Back to C`
+
+`arch/x86/boot/main.c`
+
+Various components initialization: console, memory, video...
+
+Preparation for protected mode
+
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (1/8)`
+
+```markdown
+* First function called is `copy_boot_params`
+* Copies the kernel setup header (`hdr` in header.S) to
+  `setup_header.boot_params` (AKA the 'zeropage')
+* Updates pointer to the kernel command line
+
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (2/8)`
+
+```markdown
+* `console_init` is called (early-boot console)
+* Initialize serial (port + baudrate)
+* putchar implemented using BIOS Interrupt call 0x10 (Video
+  display functions)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (3/8)`
+
+```markdown
+* `init_heap` calculates the heap boundaries
+* `validate_cpu` verifies the CPU levels and some settings (long
+   mode support, vendor, etc)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (4/8)`
+
+```markdown
+* `detect_memory` provides a map of available RAM to the CPU
+* Loops through interfaces to query informations about memory
+  segment (start, size, type)
+* Does so by using BIOS Interrupt Call 0x15 (memory functions)
+```
+
+```bash
+p1kachu@GreenLabOfGazon:TMP$ dmesg | grep e820
+[    0.000000] e820: BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009efff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009f000-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000001fffffff] usable
+[    0.000000] BIOS-e820: [mem 0x0000000020000000-0x00000000201fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000020200000-0x0000000040003fff] usable
+[    0.000000] BIOS-e820: [mem 0x0000000040004000-0x0000000040004fff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000040005000-0x00000000d6709fff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000d670a000-0x00000000d67fffff] reserved
+...
+```
+<!-- .element: style="font-size: 0.45em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (5/8)`
+
+```markdown
+* `keyboard_init` uses the BIOS Interrupt Call 0x16 to get keyboard
+   status and set repeat rate and delay.
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (6/8)`
+
+<!--
+IST: Dynamic frequency scaling technologies that allow the clock speed of the
+     processor to be dynamically changed (to different P-states) by software.
+APM: Enables an operating system running an IBM-compatible PC to work with the
+     BIOS to achieve power management.
+EDD: Provides the ability for the disk adapter BIOSes to tell the OS what it
+     believes is the boot disk
+-->
+
+```markdown
+* `query_ist` queries Intel SpeedStep informations
+* `query_apm_bios` queries Advanced Power Management
+   infos (if applicable)
+* `query_edd` queries Enhanced Disk Device infos (if applicable)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (7/8)`
+
+<!--
+EDID: data structure provided by a digital display to describe its
+      capabilities to a video source
+-->
+
+```markdown
+* Initialize the screen
+* stores video mode parameters, cursor position, font size, etc in
+  `boot_params.screen_info`
+* saves screen content to heap (`saved_screen` structure)
+* loops through video cards and collect number of modes by card
+  (`.videocards`)
+* card dependant function is called to set mode (eg `vga_set_mode`)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/main.c:main (8/8)`
+
+```markdown
+* `go_to_protected_mode` is the last called function
+* `realmode_switch_hook` invokes the real mode switch hook
+  (if applicable) and disables NMIs
+* `enable_a20` enables the A20 gate (1Mb -> 16Mb)
+* `reset_coprocessor` resets the FPU
+* `mask_all_interrupts` masks primary and secondary PIC interrupts
+* `setup_idt` and `setup_gdt` setup an empty IDT, a GDT for code,
+   data and TSS, and load them (`lidt`/`lgdt`)
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `To protected mode`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/pmjump.S:protected_mode_jump`
+
+```c
+# Takes an entry point and the address of `boot_params`
+GLOBAL(protected_mode_jump)
+        movl    %edx, %esi         # Pointer to boot_params table
+
+        xorl    %ebx, %ebx
+        movw    %cs, %bx
+        shll    $4, %ebx           # Trick to get the physical address of
+        addl    %ebx, 2f           # label 2 in $ebx
+
+        jmp    1f                  # Short jump to serialize on 386/486
+```
+<!-- .element: style="font-size: 0.40em;" -->
+```c
+1:
+        movw    $__BOOT_DS, %cx     # For later
+        movw    $__BOOT_TSS, %di    # For later
+
+        movl    %cr0, %edx
+        orb     $X86_CR0_PE, %dl    # Protected mode
+        movl    %edx, %cr0
+```
+<!-- .element: style="font-size: 0.40em;" -->
+```c
+        # Transition to 32-bit mode
+        .byte    0x66, 0xea         # ljmpl opcode
+2:      .long    in_pm32            # offset
+        .word    __BOOT_CS          # segment
+ENDPROC(protected_mode_jump)
+```
+<!-- .element: style="font-size: 0.40em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Now we are in protected mode`
+
+```c
+        .code32
+        .section ".text32","ax"
+GLOBAL(in_pm32)
+        # Set up data segments for flat 32-bit mode
+        # Remember we set %cx to __BOOT_DS in the last
+        # real mode instructions
+        movl    %ecx, %ds
+        movl    %ecx, %es
+        movl    %ecx, %fs
+        movl    %ecx, %gs
+        movl    %ecx, %ss
+        ...
+```
+<!-- .element: style="font-size: 0.40em;" -->
+```c
+        # Clear registers to allow for future extensions to the
+        # 32-bit boot protocol
+        xorl    %ecx, %ecx
+        xorl    %edx, %edx
+        xorl    %ebx, %ebx
+        xorl    %ebp, %ebp
+        xorl    %edi, %edi
+        ...
+```
+<!-- .element: style="font-size: 0.40em;" -->
+```c
+        # Remember the parameters taken by protected_mode_jump
+        jmpl    *%eax            # Jump to the 32-bit entrypoint
+ENDPROC(in_pm32)
+```
+<!-- .element: style="font-size: 0.40em;" -->
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `startup_32`
+
+Finalize protected mode setup
+
+Prepare for long mode
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/compressed/head_64.S:startup_32 (1/3)`
+
+```markdown
+* clear DF (some string operations incoming)
+* Determines the physical address of `startup_32` (`call`/`pop`)
+* Setup a temporary stack with `boot_params.scratch`
+```
+```c
+        call    1f
+1:      popl    %ebp
+        subl    $1b, %ebp
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/compressed/head_64.S:startup_32 (2/3)`
+<!--
+CS.L = Long mode
+CS.D = 0 -> 16bits / 1 -> 32bits
+-->
+
+```markdown
+* Setup a stack (located at `startup_32 + boot_stack_end`)
+* calls verify_cpu to check support for long mode and SSE
+* determines an address where the kernel can be relocated for
+  decompression (if CONFIG_RELOCATABLE)
+* Update GDT (CS.L = 1/CS.D = 0)
+* Enable PAE
+```
+```c
+movl    %cr4, %eax
+orl     $X86_CR4_PAE, %eax
+movl    %eax, %cr4
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `arch/x86/boot/compressed/head_64.S:startup_32 (3/3)`
+
+```markdown
+* Builds page tables and load the top level address into `cr3`
+* Sets EFER.LME
+* Sets return address (push kernel CS and load `startup_64` in %eax)
+* Sets paging in `cr0`
+```
+```c
+movl    $MSR_EFER, %ecx
+rdmsr
+btsl    $_EFER_LME, %eax
+wrmsr
+
+pushl    $__KERNEL_CS
+leal     startup_64(%ebp), %eax
+
+movl    $(X86_CR0_PG | X86_CR0_PE), %eax
+movl    %eax, %cr0
+
+lret
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `And we are in long mode`
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Final steps`
+
+```markdown
+* Decompress kernel
+* Load ELF
+* Jump on it
+```
+                    </script>
+                </section>
+                
+                <section data-markdown data-separator-vertical='^\n\n--\n\n'>
+                    <script type="text/template">
+                        `Boot is over, and so is this talk`
+
+---------------
+
+`Documentation`
+
+https://github.com/torvalds/linux
+
+                    </script>
+                </section>
+                
+            </div>
+        </div>
+
+        <script src="reveal.js/lib/js/head.min.js"></script>
+        <script src="reveal.js/js/reveal.js"></script>
+        <script>
+            Reveal.initialize({
+                controls: false,
+                progress: true,
+                slideNumber: true,
+                history: true,
+                keyboard: true,
+                overview: true,
+                center: true,
+                touch: true,
+                loop: false,
+                rtl: false,
+                fragments: true,
+                embedded: false,
+                help: false,
+                showNotes: false,
+                autoSlide: 0,
+                autoSlideStoppable: true,
+                mouseWheel: false,
+                hideAddressBar: true,
+                previewLinks: false,
+                transition: "slide",
+                transitionSpeed: "default",
+                backgroundTransition: "default",
+                viewDistance: 3,
+                parallaxBackgroundImage: "",
+                parallaxBackgroundSize: "",
+                parallaxBackgroundHorizontal: null,
+                parallaxBackgroundVertical: null,
+
+                dependencies: [
+                { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true },
+                { src: 'reveal.js/plugin/notes/notes.js', async: true }
+                ]
+            });
+        </script>
+
+    </body>
+</html>

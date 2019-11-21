@@ -1,0 +1,54 @@
+<h6>Follow me</h6>
+
+<ul class="social-media">
+
+
+    {% if site.p1kachu.social.twitter %}
+    <li>
+        <a title="{{ site.p1kachu.social.twitter }} on Twitter" 
+            href="https://twitter.com/{{ site.p1kachu.social.twitter }}" 
+            class="twitter wc-img-replace" target="_blank">Twitter</a>
+    </li>   
+    {% endif %}
+
+    {% if site.p1kachu.social.github %}
+    <li>
+        <a title="{{ site.p1kachu.social.github }} on Github" 
+            href="https://github.com/{{ site.p1kachu.social.github }}" 
+            class="github wc-img-replace" target="_blank">Github</a>
+    </li>
+    {% endif %} 
+
+    {% if site.p1kachu.social.facebook %}
+    <li>
+        <a title="{{ site.p1kachu.social.facebook }} on Facebook" 
+            href="https://facebook.com/{{ site.p1kachu.social.facebook }}" 
+            class="facebook wc-img-replace" target="_blank">Facebook</a>
+    </li>
+    {% endif %}
+
+    {% if site.p1kachu.social.gplus %}
+    <li>
+        <a title="{{ site.p1kachu.social.gplus }} on Google Plus" 
+            href="https://plus.google.com/{{ site.p1kachu.social.gplus }}" 
+            class="google wc-img-replace" target="_blank">Google</a>
+    </li>
+    {% endif %}
+
+    {% if site.p1kachu.social.dribble %}
+    <li>
+        <a title="{{ site.p1kachu.social.dribble }} on Dribble" 
+            href="https://dribbble.com/{{ site.p1kachu.social.dribble }}" 
+            class="dribble wc-img-replace" target="_blank">Dribble</a>
+    </li> 
+    {% endif %}
+
+    {% if site.p1kachu.social.pinterest %}
+    <li>
+        <a title="{{ site.p1kachu.social.pinterest }} on Pinterest" 
+            href="https://www.pinterest.com/{{ site.p1kachu.social.pinterest }}" 
+            class="pinterest wc-img-replace" target="_blank">Pinterest</a>
+    </li> 
+    {% endif %}
+
+</ul>

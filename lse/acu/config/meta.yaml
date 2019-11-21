@@ -1,0 +1,11 @@
+title: "Linux boot process"
+description: "From bootloader to long mode"
+abstract: ""
+authors: "Stanislas Lejay"
+date: "ACU Recruitment - July 3, 2017"
+files:
+    - "src/slides.md"
+rjs_path: "reveal.js"
+separator: "\n\n---\n\n"
+rjs_theme: "black"
+hjs_theme: "darkula"

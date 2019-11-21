@@ -1,0 +1,44 @@
+---
+layout: post
+title:  "v0lt - Security CTF Toolkit"
+date:   2015-08-06 22:48:45
+description: v0lt is a Security CTF Toy toolkit referencing utils that helped
+             me solving exercices during competitions.
+categories:
+- project
+- security
+---
+
+> v0lt is an attempt to regroup every tool I used/use/will use in security CTF, Python style.
+
+A lot of exercises were solved using bash scripts but Python may be more flexible, that's why. Nothing to do with Gallopsled. It's a toy toolkit, with small but specific utils only.
+
+A lot of it has been taken from real exploits I used in CTF, and thus they have officially been tested.
+You can check it on its [Github repo][repo].
+
+#### Demo: Shellcode
+{% highlight ruby %}
+>>> from v0lt import *
+>>> shellhack = ShellHack(4096, "bin","execve")
+>>> shellhack.get_shellcodes(shellhack.keywords)
+
+.
+.
+.
+85: Linux/x86:setuid(0) & execve(/sbin/poweroff -f) - 47 bytes
+86: Linux/x86:execve (/bin/sh) - 21 Bytes
+87: Linux/x86:break chroot execve /bin/sh - 80 bytes
+88: Linux/x86:execve(/bin/sh,0,0) - 21 bytes
+.
+.
+.
+
+Selection: 86
+Your choice: http://shell-storm.org/shellcode/files/shellcode-752.php
+Shellcode: "\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62[...]"
+
+>>> nc.shellcat(shellhack.shellcode)
+>>> padded_shellcode = shellhack.pad()
+{% endhighlight %}
+
+[repo]: https://github.com/P1kachu/v0lt

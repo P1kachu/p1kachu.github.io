@@ -9,6 +9,9 @@ categories:
 
 > 276hp at 1953 bauds, communicating with the elderly
 
+_This project was presented at BlackHat Europe 2019. Video available through
+BHEU's VOD services._
+
 I moved to Japan mid-2017 and bought an old _[90's car]_. While old,
 this car became my daily driver, as well as my track and tōge ride. It
 definitely is a nice car to play with. At that time, I was still working on my

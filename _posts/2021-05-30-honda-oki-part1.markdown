@@ -1,8 +1,7 @@
 ---
 layout: post
-title:  Dumping old Honda ECUs (P30 analysis p.1)
+title:  Dumping old ECUs (P30 analysis p.1)
 date:   2021-05-30 03:00:00
-hidden: true
 categories:
 - project
 - automotive
@@ -80,7 +79,7 @@ would be amazing if we could, and [we laughed](https://youtu.be/gnTq7jOMsNc?t=49
 But I was really curious and since I still lack decent hardware knowledge, I
 asked two good friends (hey
 [Phil](https://www.linkedin.com/in/phil%C3%A9mon-gardet/) and
-[JF](https://www.linkedin.com/in/jean-fran%C3%A7ois-nguyen-1b8b13107/)) what
+[JF](https://twitter.com/_jfng)) what
 they thought of this. They looked through the pictures I sent them and told me
 that they saw two ways to do that: the first one is using the serial port
 behind the R4945A machine and its remote control protocol to somehow dump the

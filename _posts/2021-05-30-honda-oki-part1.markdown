@@ -261,7 +261,7 @@ associated with it._
 ### Then
 
 The next part(s) of this article should be about reversing and, if possible,
-modifying/reflashing the chips using only an arduino (I'm already on it really,
+modifying/reflashing the chips (I'm already on it really,
 but I'm busy doing other things at the same time so I'm gonna release things
 bit by bit). Most scripts and code will be posted on [this Github
 repo](https://github.com/P1kachu/honda-p30-analysis) when the article is

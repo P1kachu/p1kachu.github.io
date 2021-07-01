@@ -18,9 +18,9 @@ Spoon Sports one, and mine (the unknown one extracted from my car's ECU, that
 we'll call ZERO since this is what the big sticker on it says).
 Thanks to this, and with more diffing than
 reversing, I should be able to understand what my car's tune is about, and
-what's different from stock/Spoon. Then, if possible, I will try to build an
-EPROM programmer in the same fashion we did the reader and reupload a custom
-firmware.
+what's different from stock/Spoon.
+Then, if possible, I will try to modify and reupload the custom firmware on a
+different EPROM.
 
 For copyright reasons, the dumped firmware will not be released, only extracts
 will be displayed.
@@ -30,12 +30,12 @@ will be displayed.
 There were a lot of revisions of this ECU, depending on country, year, engine,
 etc.
 
-The sticker on my ECU says P30-010, which is the JDM kouki (later) version of
-the EG6. Odly enough, after quickly checking against the Spoon P30-010 and
-Spoon P30-000 (zenki - earlier) dumps, it seems that the code running
-on the ECU is actually from a P30-000 version. The circuitry being similar
-between both zenki and kouki, they probably just flashed their own 000 firmware
-on a 010 ECU. The firmware being 000, this is the version will be focusing on from
+The part number on my ECU says `P30-010`, which is the JDM `kouki` (later) version of
+the EG6. Oddly enough, after quickly checking against the Spoon `P30-010` and
+Spoon `P30-000` (`zenki` - earlier) dumps, it seems that the code running
+on the ECU is actually from a `P30-000` version. The circuitry being similar
+between both `zenki` and `kouki`, they probably just flashed their own `000` firmware
+onto a `010` ECU. The firmware being `000`, this is the version will be focusing on from
 now on.
 
 The stock firmware was downloaded from [PGMFI (ECU ID
@@ -50,19 +50,19 @@ and find what had been modified and thus where to look. We can see that the
 speed limit is changed from 185kph (0xb9) to 255kph (0xff) at address 0x1831,
 as well as rev limits on lines 0x637x and 0x638x, or VTEC [de]activation points
 on bytes 0x643[6-9]. I don't exactly know what operation is used to convert
-those bytes to RPM. I wanted to solve it through equation systems, but some
-internet pages seem to indicate that the value is not very accurate, so I just
-ignored (see Additional notes down there).
+those bytes to RPM. I wanted to solve it through a system of equations, but different
+sources seemed to indicate that the value is not very accurate, so I just
+ignored it (see Additional notes down there).
 
 ![dump](/assets/content/honda8.png)
 
-The biggest red blob is the Air/Fuel ratio base map. Spoon rewrote this map to
-give the engine a more aggressive tuning. The ignition map was left untouched.
+The biggest red blob is the Air/Fuel (A/F) ratio base map (see Additional notes). Spoon rewrote this map to
+give the engine a more aggressive tuning. The Ignition map (see Additional notes) was left untouched.
 I won't explain here what those are about as I don't want to get into engine
-tuning too much. I'll try to focus on the ECU and computer science part mostly.
+tuning too much. I will try to focus on the ECU and computer science part mostly.
 
 The last two lines are interesting. They show that some FF bytes in the stock
-ECUs were replaced. If you look more closely with `binwalk -W`, you realise
+ECUs were replaced. If you look more closely with `binwalk -W`, you realize
 that those bytes are not code at all, but just padding to fill the 32K of the
 ROM, so why modify bytes there?
 
@@ -74,7 +74,7 @@ their ECUs to verify the integrity of the firmware. If the checksum wasn't
 correct, the check engine lamp (CEL) would come up. He also told me that Spoon
 were the first ones to figure out the checksum and offer tuned ECUs that would
 not trigger the CEL, and this is one of the reasons their ECUs sold well
-despite being more expensive than other competitors.
+despite being more expensive than competitors'.
 Those bytes at the end are how Spoon managed to fix the checksum issue, as it
 is just the 8bit addition (no carry, nothing, just roll the byte) of all the
 bytes on the firmware. If the sum is 0, then the firmware is "legit", so Spoon
@@ -87,7 +87,8 @@ the ECU, or to not have to re-erase the whole chip in between modifications
 when it was not necessary (you can easily program a 0xFF to any other value,
 but you can only turn 1s into 0s without having to erase so it's easier to
 start from a fresh 0xFF byte).
-Since only the sum of all the bytes need to be 0, you can write whatever you want in those 0xFF withouth altering the ECU's functionalities.
+Since only the sum of all the bytes needs to be 0, you can write whatever you
+want in those 0xFF without altering the ECU's functionalities.
 
 ```
 - Modify the ECU
@@ -107,29 +108,31 @@ that only a valid checksum triggers the check lamp? Let's try to find out.
 
 Thanks to what we learned with the Spoon ECU, we should be able to see what has
 been modified in my ECU compared to the stock one. Let's apply the same
-techniques to get a first overview, and see what's different:
+method to get a first overview, and see what's different:
 
 ![dump](/assets/content/honda11.png)
 
 Since I don't know where this ECU came from, there is no documentation readily
-available about most addresses. First weird thing I notice is that the
-speed limiter's value doesn't seem to have been changed, while I know that the
+available about most addresses. First weird thing I noticed is that the
+speed limiter's value doesn't seem to have been changed (one byte @ 0x1831),
+even though I know that the
 ECU allows me to reach speeds like 200kph easily. The rev limiter is quite high
 (the smaller the value, the higher the rev limit is: stock is 0xe4, Spoon is
-0xd6, ZERO is 0xcc) which might be a bit dangerous. The AF table's axis were
+0xd6, ZERO is 0xcc) which might be a bit dangerous. The A/F table's axis were
 modified at addresses 0x6388 (12 bytes) and 0x6397 (12 bytes). The addresses
-0x71A0 to 0x71C0 seem to contain part of the AF tables, and the finally the big
+0x71A0 to 0x71C0 seem to contain part of the A/F tables, and the big
 blob at 0x7310 represents the Ignition table.
 
 And that's it. Not much was modified in this firmware (the VTEC points are
 still stock, surprisingly). I will ask Tuner-san what he thinks about the
-tuning itself (the Ignition and AF table modifications), but we do want to know
+tuning itself (the Ignition and A/F table modifications), but we do want to know
 exactly why the invalid checksum doesn't trigger the CEL and why the speed
-limiter doesn't kick it when the value is still stock. I also notice that a few
-switches have been toggled between addresses 0x6002 and 0x601B. By digging a
+limiter isn't activating when it should. I also noticed that a few
+switches had been toggled between addresses 0x6002 and 0x601B. By digging a
 bit more,
-I realize that the whole ECU seems to be in debug/tuning mode (addresses 0x6005
-and 0x6011). This could explain why the CEL is not on even though the checksum is invalid, but I'll need to confirm this.
+I realized that the whole ECU seemed to be in debug/tuning mode (addresses 0x6005
+and 0x6011). This could explain why the CEL was not on even though the checksum
+was invalid, but I will need to confirm this.
 So far, here are the differences between stock, Spoon, and ZERO.
 
 ```
@@ -182,7 +185,7 @@ So far, here are the differences between stock, Spoon, and ZERO.
 Modified in the ZERO ECU:
 - Base A/F, A/F (high) and Ignition (high) maps (this much makes sense)
 - Rev limiter at ~9200 RPM (a bit high imo)
-- Knock sensor disabled (some hardware doesn't have a knock board, might be the reason?)
+- Knock sensor disabled (some hardware doesn't have a knock board, is it the reason?)
 - Oxygen heater sensor disabled (same, some ECUs do not have heater control)
 - Oxygen sensor disabled (necessary to tune the maps)
 - Debug mode enabled (necessary to tune the maps)
@@ -196,22 +199,22 @@ So we'll have to load the firmware in IDA.
 
 ### Reverse engineering the firmware
 
-Thanksfully, I had already started working on this months ago when I was
+Thankfully, I had already started working on this months ago when I was
 playing around with my DC2's ECU, and wrote an [experimental IDA loader](https://github.com/P1kachu/oki-66207-processor) to start reversing the
-firmware in IDA. It's not the best but it at least allowed me to run some IDA
+firmware. It's not the best but at least it allowed me to run some IDAPython
 scripts around the firmware to find Xrefs from code to the data I was
 interested in, and to try to understand what parts of the code had been
 altered.
 
-Compared to recent ECUs or software in general, this kind of ECU always shows
+Compared to recent ECUs or software in general, this kind of firmware always shows
 some challenge. First thing I saw was that a lot of routines seemed to be
 written like MACROs, with sometimes two or more functions sharing code: for
 example, an Interrupt handler would at some point jump into another handler
 because they share the same kind of clean-up/epilogue. IDA doesn't really let
-you handle that correctly (as far as I know), so I couldn't define functions
+you handle that correctly (as far as I know), so I could not define functions
 the way I wanted.
-Another thing, related to the architecture itself this time and that I already
-mentionned in the loader's code, is that the same opcode can have different
+Another thing, related to the architecture itself this time is that the same
+opcode can have different
 meanings at runtime depending on the status flag called DD. You can try to
 track DD during disassembly (I do) but since IDA is multithreaded in its
 analysis, you frequently stumble upon some weird results with instructions
@@ -225,12 +228,12 @@ me look around and poke at things.
 #### Why is the CEL not turning ON even though the checksum is invalid?
 
 This is the question I wanted answered and it actually took less than 5 minutes
-to find the reason, thanks to some information I found on [PGMFI](https://mycomputerninja.com/~jon/www.pgmfi.org/twiki/bin/view/Library/P30.html).
+to find the reason.
 The routine responsible for the checksum begins around 0x282a in the P30
 firmware, and the "Checksum OK" branch is at 0x2867. By looking at the Xrefs to
 this address, I see that there are three ways to actually take this branch. I
 don't really understand the first one to be honest, as the whole checksum loop
-code doesn't make much sense to me and it might be because of erroneous
+code doesn't make much sense to me and it might be due to erroneous
 disassembly.
 
 ![checksum](/assets/content/honda12.png)
@@ -249,7 +252,7 @@ the checksum, as expected.
 ![checksum](/assets/content/honda13.png)
 ![checksum](/assets/content/honda14.png)
 
-For the sake of completeness, if I do manage to do reflash the ECU later, I
+For the sake of completeness, if I do manage to reflash the ECU later, I
 will try putting it back into non-debug mode without changing anything else to
 see if I was right. But for now, I think it's safe to assume this is the
 correct explanation.
@@ -272,28 +275,29 @@ check), but after looking around the code, there doesn't seem to be anything of
 the sort in this area. The code is still there, and the same as factory ECUs.
 
 Second possibility is, PGMFI talks about two switches used to
-activate/deactivate the speed limiter in normal (0x600B) and debug mode
+enable/disable the speed limiter in normal (0x600B) and debug mode
 (0x6013).
 
 
 ![checksum](/assets/content/honda17.png)
 
 They are used in a region of code that checks all those switches, but they both seem to
-be turned in a way that wouldn't disengage the speed limiter (normal mode one
+be turned in a way that would not disengage the speed limiter (normal mode one
 is turned ON, debug mode one seems to be turned ON too, but this depends on
 what the PGMFI guys meant by "Speed Limiter Setting for debug mode").
 
 ![checksum](/assets/content/honda16.png)
 
-
 Since I didn't find any way to compare my IDA disassembly output to anything
 else, I wasn't sure that I was reversing properly disassembled code. Either way, digging
 a bit around the code didn't raise anything else but the debug mode assumption.
-To confirm this, I will try to reflash the firmware or, worst case scenario,
-use Tuner-san's machine to just modify this one debug byte and see.
+I will also try confirming this assumption when reflashing the firmware.
 
-If things work the way they are expected to, this should be the next (and
-finale I guess) part of this article.
+If things work the way they are expected to, reflashing should be the next (and
+final I guess) part of this article. Feel free to ask any detail/question on [Twitter](https://twitter.com/0xP1kachu). Most scripts and code will be posted on [this Github
+repo](https://github.com/P1kachu/honda-p30-analysis) when the article is complete.
+
+Thanks for reading~
 
 
 ##### Additional notes (that just didn't fit in the main explanation)
@@ -304,6 +308,12 @@ finale I guess) part of this article.
   for the VTEC points and gives slightly off values for the redline. So the
   values written in the "Memo" column in the Reverse engineering section should
   be taken with care.
+
+- Air/Fuel (A/F) tables are used by the ECU to determine which ratio of fuel vs.
+  air to inject in the engine depending on engine load and engine speed.
+  Advance/Ignition table are used to determine when to fire the sparkplug in
+  each cylinder. Modifying those tables is what constitutes the biggest part
+  in tuning an engine.
 
 ### Sources (common to all parts of this article)
 

@@ -12,6 +12,27 @@ categories:
 > Now that we dumped the firmware, let's see what that unknown tune is all
 > about...
 
+### By the way
+
+After the first part was published on Hackaday, I read a lot of comments saying
+that there was no point in doing what I was doing here, that I should just use an
+aftermarket ECU (??), that there were tools readily available to modify it, etc.
+
+I KNOW that, but the purpose of this is for me to have something to reverse
+engineer to understand how it works, which is what those people that created
+the tools did years ago. I don't actually care about modifying the ECU,
+Tuner-san and I already have good firmwares ready to run, but we are curious
+people who like to tinker and understand how things were done. I'm not filling
+a lack of tool here, but just trying to walk the steps of the first people who
+encountered a Honda ECU and tried to play around with it, out of CURIOSITY.
+All this information could be useful in a project where tools and documentation
+are not a thing.
+
+If you can't understand curiosity and learning for fun, just stop reading.
+
+Back to our ECUs!
+
+### The firmwares
 
 In this study I will look at three different firmwares: the stock one, the
 Spoon Sports one, and mine (the unknown one extracted from my car's ECU, that
@@ -24,8 +45,6 @@ different EPROM.
 
 For copyright reasons, the dumped firmware will not be released, only extracts
 will be displayed.
-
-### The firmwares
 
 There were a lot of revisions of this ECU, depending on country, year, engine,
 etc.
@@ -45,7 +64,7 @@ limiter and VTEC point for example, which are what people tend to modify first)
 and confirmed that they contained the stock value. The checksum was also equal
 to 0 (more info on that later).
 
-I started by using `binwalk -Wi` to diff the Spoon firmare with the stock one,
+I started by using `binwalk -Wi` to diff the Spoon firmware with the stock one,
 and find what had been modified and thus where to look. We can see that the
 speed limit is changed from 185kph (0xb9) to 255kph (0xff) at address 0x1831,
 as well as rev limits on lines 0x637x and 0x638x, or VTEC [de]activation points

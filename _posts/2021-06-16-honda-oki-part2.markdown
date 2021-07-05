@@ -2,7 +2,6 @@
 layout: post
 title:  Reversing old ECUs (P30 analysis p.2)
 date:   2021-06-16 03:00:00
-hidden: true
 categories:
 - project
 - automotive

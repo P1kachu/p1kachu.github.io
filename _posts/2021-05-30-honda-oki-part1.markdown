@@ -275,6 +275,8 @@ available)](https://www.youtube.com/c/Kaeruzoku/featured).
 
 Thanks for reading~
 
+Update 2021/07/05: [Part 2 now up!](http://p1kachu.github.io/project/automotive/2021/06/16/honda-oki-part2/)
+
 
 ### Sources (common to all parts of this article)
 

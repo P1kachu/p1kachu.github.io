@@ -7,6 +7,7 @@ permalink: /external/
 Here is a collection of external links related to things I've worked on:
 
 #### 2017
+* 2019-07-11 - Talks on the Subaru speed limiter bypass project - [interview (en)][bheu-interview] and [slides][bheu-slides]
 * 2017-12-28 - How to drift with any car (34c3) - [video (en)][34c3-video] and [slides (en)][34c3-slides] (Quarkslab)
 * 2017-10-11 - OBD Dongle reverse engineering [article][obd-qb] (Quarkslab)
 * 2017-10-12 - My RC car just got itself a CAN bus [slides (lt)][rc-car-slides] (LSE)
@@ -23,5 +24,6 @@ Here is a collection of external links related to things I've worked on:
 [obd-qb]: https://blog.quarkslab.com/reverse-engineering-of-the-nitro-obd2.html
 [34c3-video]: https://www.youtube.com/watch?v=KU7gl1n1tIs
 [34c3-slides]: https://github.com/P1kachu/34c3-how-to-drift-with-any-car
-
+[bheu-interview]: https://www.blackhat.com/latestintel/11072019-black-hat-europe-q-and-a-hacking-a-90s-sports-car.html
+[bheu-slides]: https://www.blackhat.com/eu-19/briefings/schedule/index.html#unleashing-the-power-of-my--years-old-car-17570
 [rc-car-slides]: https://p1kachu.github.io/lse/lt-rc-car/

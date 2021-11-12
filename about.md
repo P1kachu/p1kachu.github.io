@@ -8,7 +8,7 @@ I'm Stanislas Lejay, a computer science engineer from France specialized in
 reverse engineering, and security in general.
 
 I used to take part in security events like CTFs with my team from the
-[LSE](http://www.lse.epita.fr). I now then worked at [WhiteMotion (Japan)](http://www.white-motion.com/) for 3 years as security and automotive research. Now, I work for [NCC Group.](https://www.nccgroup.com/jp/) as a Managing Security Consultant.
+[LSE](http://www.lse.epita.fr). I then worked for [WhiteMotion (Japan)](http://www.white-motion.com/) for 3 years as a security and automotive researcher. I now work for [NCC Group.](https://www.nccgroup.com/jp/) as a Managing Security Consultant.
 
 I like computer security and anything related to automotive.
 

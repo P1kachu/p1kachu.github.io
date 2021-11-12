@@ -19,7 +19,7 @@ I like computer security and anything related to automotive.
 - [Github][github]
 - [Twitter][Twitter]
 - [Linkedin][linkedin]
-- ![resume][/assets/resume.pdf]
+- [resume][/assets/resume.pdf]
 
 or just say `Hello` at [{{ site.p1kachu.author.email }}](mailto:{{ site.p1kachu.author.email }}).
 

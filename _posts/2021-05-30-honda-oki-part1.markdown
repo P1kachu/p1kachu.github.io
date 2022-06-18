@@ -19,7 +19,7 @@ to understand how things worked back in the days and how tuning was done.
 ![Computer engineer flexing](/assets/content/honda1.png)
 
 
-Both cars I own right now, a ![1995 Honda Integra](https://www.youtube.com/watch?v=y1GhrjJV6FQ) on the left and a ![1993 Honda Civic](https://www.youtube.com/watch?v=ABHSDeWjEWk) on the right have tuned ECUs based on the stock ones, which means the
+Both cars I own right now, a [1995 Honda Integra](https://www.youtube.com/watch?v=y1GhrjJV6FQ) on the left and a [1993 Honda Civic](https://www.youtube.com/watch?v=ABHSDeWjEWk) on the right have tuned ECUs based on the stock ones, which means the
 circuitry is roughly the same as it was 25~30 years ago, and the firmware is
 just a modified version of the original one (by this I mean it's not running a recent
 aftermarket computer). Both cars have very similar engines (only differ in

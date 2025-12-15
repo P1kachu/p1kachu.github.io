@@ -13,8 +13,8 @@ I used to take part in security events like CTFs with my team from the
 [LSE](http://www.lse.epita.fr).
 I then work(ed) for:
 - [WhiteMotion (Japan)](http://www.white-motion.com/) for 3 years as a security and automotive researcher.
-- [NCC Group](https://www.nccgroup.com/jp/) as a Managing Security Consultant.
-- [Trenchant](https://www.l3harris.com/all-capabilities/trenchant) as a Senior Security Researcher.
+- [NCC Group](https://www.nccgroup.com/jp/) for 2 years as a Managing Security Consultant.
+- [Trenchant](https://www.l3harris.com/all-capabilities/trenchant) since 2023 as a Senior Security Researcher.
 
 I like computer security and anything related to automotive.
 
